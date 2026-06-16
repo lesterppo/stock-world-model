@@ -1,0 +1,30 @@
+# Data files (downloaded or generated)
+data/
+*.csv
+
+# Model checkpoints (binary, large)
+checkpoints/
+*.pt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.key
+*.pem
+credentials/
