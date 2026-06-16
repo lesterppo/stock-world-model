@@ -270,15 +270,18 @@ def fuse_pipeline(
     fused["MA_20"] = fused["Close"].rolling(20).mean()
     fused["MA_60"] = fused["Close"].rolling(60).mean()
 
-    # Step 3: PIT-align fundamentals (forward-fill from announcement)
-    # Fund data is quarterly — ffill so every trading day has the latest quarter's values
+    # Step 3: PIT-align fundamentals (forward-fill from ANNOUNCEMENT date)
+    # Earnings reports are filed 4-6 weeks after quarter end.
+    # We delay fundamentals by 45 calendar days to avoid lookahead bias.
     fund_cols = fund_df.columns.tolist()
     for col in fund_cols:
         fused[col] = np.nan
-    # For each fundamental date, set the value from that date forward
+    # For each fundamental date, shift forward by 45 days (SEC filing delay)
+    # then forward-fill from that announcement date
     for date, row in fund_df.iterrows():
+        announce_date = date + pd.Timedelta(days=45)
         for col in fund_cols:
-            fused.loc[fused.index >= date, col] = row[col]
+            fused.loc[fused.index >= announce_date, col] = row[col]
     # Backfill pre-first-quarter (use first available)
     fused[fund_cols] = fused[fund_cols].bfill()
 
