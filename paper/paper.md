@@ -1,35 +1,26 @@
 ---
-title: "The Efficiency of Parsimonious Feature Sets in Financial Regime Detection"
-subtitle: "Evidence that Simple Macro Factors Outperform Deep Latent State-Space Models for Multi-Asset Allocation"
+title: "The Limits of Algorithmic Complexity in Multi-Asset Allocation"
+subtitle: "A Journey from Recurrent State-Space Models to Dual Momentum"
 author: "Lester PPO"
 date: "June 2026"
 abstract: |
-  We investigate whether deep latent state-space models—specifically DreamerV2/V3
-  Recurrent State-Space Models (RSSMs)—provide measurable benefit over simple
-  macro-economic features for financial regime detection and multi-asset portfolio
-  allocation. Using 14 years of daily data spanning four asset classes (equities,
-  long-duration treasuries, gold, and commodities), we conduct an extensive empirical
-  study comprising four failed prediction approaches and one successful regime-based
-  allocation framework. Our central finding is obtained through a rigorous 9-year
-  walk-forward validation with rolling 5-year training windows and transaction cost
-  accounting. The RSSM's 20-dimensional PCA-reduced latent representation achieves
-  a mean Calmar ratio of 1.83, while a 6-dimensional vector of raw macro features
-  (VIX level, VIX change, yield spread, Treasury yield, and momentum at two horizons)
-  achieves 2.05—a 12% improvement using 99.95% fewer parameters. We further document
-  four independent model collapses: return prediction ($R^2 = -1.19$), volatility
-  prediction ($R^2 = -1.64$), contextual bandit policy learning (convergence to
-  constant 0.50), and cross-sectional ETF ranking (collapse to prior class). The
-  discovered regimes are interpretable, corresponding to well-known economic
-  narratives (COVID panic, Goldilocks, inflationary growth), and provide meaningful
-  tail-risk reduction compared to static 60/40 portfolios. We conclude that for
-  daily-frequency macro regime allocation, domain-engineered feature sets dominate
-  representation learning, and that the primary contribution of regime-switching
-  frameworks is capital preservation during correlation breakdowns rather than
-  return enhancement.
+  We document a comprehensive, four-phase empirical study exploring algorithmic
+  approaches to macro regime detection and multi-asset portfolio allocation.
+  Spanning 14 years of daily data across equities, bonds, gold, and commodities,
+  we rigorously compare deep Recurrent State-Space Models (RSSMs), K-Means regime 
+  clustering, volatility targeting, trend following, and Dual Momentum. Our 
+  central finding is that unlevered Dual Momentum achieves risk-adjusted parity 
+  (Calmar 0.396) with SPY buy-and-hold (Calmar 0.404) while reducing maximum 
+  drawdown by 40% (from -33.7% to -20.3%). We further show that leverage in 
+  momentum frameworks creates negative convexity—margin costs and volatility decay 
+  consume all incremental return. We conclude that for daily-frequency multi-asset 
+  allocation, algorithmic intervention is best utilized not for return enhancement, 
+  but for behavioral survivability: engineering portfolios that investors can 
+  reliably hold through structural market stress without capitulating.
 
   **Keywords:** regime detection, multi-asset allocation, recurrent state-space models,
-  Dreamer, K-Means clustering, macro factors, walk-forward validation, Calmar ratio,
-  posterior collapse, ablation study
+  Dreamer, Dual Momentum, trend following, volatility targeting, walk-forward validation,
+  Calmar ratio, behavioral finance
 
 header-includes:
   - \usepackage{booktabs}
@@ -58,49 +49,59 @@ The conventional approach to regime detection relies on human-engineered macro-e
 indicators: the VIX volatility index as a fear gauge, yield curve spreads as recession
 signals, interest rate levels as monetary policy proxies, and momentum factors as trend
 indicators [@faber2007; @kritzman2012]. These features benefit from decades of economic
-research and intuitive interpretability, but are inherently limited to linear or
-hand-specified non-linear combinations.
+research and intuitive interpretability.
 
 Recent advances in deep representation learning, particularly the Dreamer family of
 world models [@hafner2019dream; @hafner2020dreamerv2; @hafner2023dreamerv3], offer an
 alternative paradigm: learn rich latent representations of temporal dynamics directly
 from data. The Recurrent State-Space Model (RSSM) at the core of Dreamer separates
 deterministic and stochastic latent states, enabling both accurate reconstruction of
-past observations and coherent imagination of future trajectories. While RSSMs have
-demonstrated remarkable success in visual reinforcement learning domains, their
-application to financial time series remains largely unexplored.
+past observations and coherent imagination of future trajectories.
 
-**Our research question is straightforward:** for the specific task of macro regime
-detection and multi-asset portfolio allocation, do RSSM-learned latent representations
-provide additional value over simple, human-engineered macro features?
+**This paper documents a complete, four-phase journey through the hierarchy of
+algorithmic complexity in multi-asset allocation:**
 
-To answer this question, we conduct a comprehensive empirical study spanning:
-(1) construction and training of a DreamerV2/V3 RSSM on 14 years of SPY daily data;
-(2) four distinct prediction tasks that all converge to degenerate solutions, providing
-negative results of independent interest; (3) a successful regime-based allocation
-framework using K-Means clustering on the RSSM's latent states; (4) a head-to-head
-ablation study comparing RSSM-learned features against raw macro features; and
-(5) a production implementation with transaction costs, out-of-distribution guards,
-and ensemble methods, validated through a rigorous 9-year walk-forward framework.
+1. **Phase 1 (Complexity):** We construct a DreamerV2/V3 RSSM with 130,000 parameters
+   and train it on 14 years of daily SPY data. Across four distinct prediction tasks—return
+   forecasting, volatility prediction, contextual bandit policy learning, and cross-sectional
+   ETF ranking—the model collapses to degenerate solutions. The optimizer converges to
+   the mathematically correct answer in a noise-dominated environment: the prior distribution.
 
-**Our central finding is unambiguous:** the 6-dimensional raw macro feature vector
-outperforms the RSSM's 20-dimensional PCA-reduced latent representation by 12% on
-the Calmar ratio (2.05 vs. 1.83) in walk-forward testing, using 99.95% fewer
-parameters. Both approaches meaningfully outperform static 60/40 and risk parity
-benchmarks, but neither beats simple SPY buy-and-hold in absolute returns. The
-discovered regimes are interpretable and correspond to well-known economic narratives,
-validating that K-Means on macro features captures genuine market structure.
+2. **Phase 2 (Clustering):** We extract RSSM latent states and apply K-Means clustering
+   for regime detection. While in-sample clusters appear interpretable, walk-forward
+   validation reveals that cluster boundaries fitted on 2010–2021 data fail to generalize
+   to post-COVID market structure. Soft distance-weighted blending—our attempt to rescue
+   the approach—merely regresses allocations toward equal-weight.
+
+3. **Phase 3 (Risk Heuristics):** We implement volatility targeting (inverse-vol weighting
+   with equity-sleeve allocation) and trend following (200-day simple moving average filter).
+   While these strategies reduce volatility, they chronically underperform SPY buy-and-hold
+   during the 2010–2024 structural bull market. We document and correct a critical Calmar
+   ratio miscalculation (using cumulative rather than annualized returns) that had
+   previously inflated all performance metrics.
+
+4. **Phase 4 (Momentum):** We implement Gary Antonacci's Dual Momentum framework—relative
+   momentum across SPY, GLD, and DBC, filtered by absolute momentum of SPY versus cash—and
+   test levered variants with tiered margin. The unlevered Dual Momentum strategy achieves
+   our central result: Calmar ratio of 0.396, essentially tying SPY's 0.404, while reducing
+   maximum drawdown from -33.7% to -20.3%. Leveraged variants fail: margin costs and
+   volatility decay consume all incremental return.
 
 **Our contributions are threefold:**
-1. We provide the first rigorous empirical comparison of learned versus engineered
-   feature representations for financial regime detection, with full walk-forward
-   validation and transaction cost accounting.
-2. We document four independent model collapses—return prediction, volatility
-   prediction, policy learning, and cross-sectional ranking—that collectively
-   demonstrate the fundamental difficulty of extracting predictive signal from
-   daily OHLCV data, regardless of model architecture.
-3. We release a complete, production-grade implementation including data pipelines,
-   model training, backtesting, and ablation frameworks as open-source software.
+
+1. We provide the first rigorous empirical comparison spanning four distinct algorithmic
+   paradigms—neural latent representations, regime clustering, risk-management heuristics,
+   and momentum-based allocation—with full walk-forward validation and transaction cost
+   accounting.
+
+2. We document and correct a Calmar ratio measurement error (cumulative vs. annualized
+   return) that has the potential to inflate reported performance metrics by an order of
+   magnitude in multi-decade backtests.
+
+3. We articulate the "behavioral survivability" thesis: the primary contribution of
+   algorithmic allocation frameworks is not return enhancement, but the engineering of
+   portfolios with drawdown profiles shallow enough that real investors—who panic-sell
+   during severe drawdowns—can actually hold them through full market cycles.
 
 # 2. Related Work
 
@@ -108,29 +109,25 @@ validating that K-Means on macro features captures genuine market structure.
 
 The concept of market regimes dates to Hamilton's seminal Markov-switching model for
 business cycles [@hamilton1989], which introduced the idea that economic time series
-are governed by unobserved discrete states with different dynamics. In finance, Ang
-and Bekaert [@ang2002] applied regime-switching to international asset allocation,
-showing that regimes characterized by high volatility and correlation breakdowns
-require fundamentally different portfolio weights than tranquil periods.
+are governed by unobserved discrete states with different dynamics. Ang and Bekaert
+[@ang2002] applied regime-switching to international asset allocation, showing that
+regimes characterized by high volatility and correlation breakdowns require fundamentally
+different portfolio weights than tranquil periods.
 
-More recent work has explored machine learning approaches to regime detection.
 Kritzman et al. [@kritzman2012] used a statistical measure of market turbulence to
 identify regimes and demonstrated significant improvements in risk-adjusted returns
 through dynamic allocation. Nguyen et al. [@nguyen2018] applied Hidden Markov Models
-to S&P 500 returns, finding three distinct volatility regimes. Related approaches
-have used autoencoders to learn low-dimensional representations of market states and
-clustered them into interpretable regimes.
+to S&P 500 returns, finding three distinct volatility regimes.
 
 ## 2.2 Deep Learning for Financial Time Series
 
 The application of deep learning to financial forecasting has produced mixed results.
-While LSTM networks [@hochreiter1997] and more recent Transformer architectures
-[@vaswani2017] have shown promise for high-frequency or alternative data sources,
-their performance on daily OHLCV data for return prediction has been underwhelming.
 Gu et al. [@gu2020] conducted a comprehensive empirical evaluation of machine learning
 methods for cross-sectional stock returns, finding that neural networks outperform
 linear models only when the dataset is sufficiently large and the signal-to-noise
-ratio is favorable.
+ratio is favorable. Kelly et al. [@kelly2019] demonstrate that simpler models often
+outperform complex ones in financial prediction tasks because additional parameters
+fit noise rather than signal.
 
 ## 2.3 World Models and Recurrent State-Space Models
 
@@ -139,92 +136,22 @@ The Dreamer family of world models [@hafner2019dream; @hafner2020dreamerv2;
 from high-dimensional observations. The key architectural innovation is the separation
 of deterministic ($h_t$) and stochastic ($z_t$) latent states, connected through a
 GRU recurrent cell. This prevents the posterior collapse commonly observed in
-variational autoencoders, where the stochastic latent variables carry zero information.
-Financial applications of world models remain rare, with existing work focused on
-price prediction [@sirignano2019] rather than state representation learning for
-downstream tasks.
+variational autoencoders. Financial applications of world models remain rare.
 
-## 2.4 The Bias-Variance Tradeoff in Financial ML
+## 2.4 Momentum and Trend Following
 
-The tension between model complexity and generalization is particularly acute in
-finance due to the low signal-to-noise ratio of asset returns. Kelly et al. [@kelly2019]
-demonstrate that simpler models often outperform complex ones in financial prediction
-tasks because the additional parameters fit noise rather than signal. This finding
-is consistent with the broader observation that in small-data regimes—and 14 years
-of daily data, while substantial by financial standards, is small by deep learning
-standards—simple models with strong inductive biases dominate [@hastie2009].
+Momentum is among the most robust anomalies in financial economics, with evidence
+spanning over 200 years across asset classes and geographies [@jegadeesh1993].
+Faber [@faber2007] introduced a simple tactical asset allocation model using a
+10-month moving average to rotate between asset classes. Antonacci [@antonacci2014]
+formalized Dual Momentum, combining relative momentum (cross-asset comparison) with
+absolute momentum (trend filter) in the Global Equity Momentum (GEM) framework.
+Moskowitz et al. [@moskowitz2012] documented time-series momentum across 58 liquid
+instruments, establishing it as a distinct phenomenon from cross-sectional momentum.
 
-Our work connects these four literatures by providing a direct empirical comparison
-of a complex learned representation (RSSM) against a simple engineered representation
-(macro features) for the same downstream task (regime-based allocation), with
-identical evaluation methodology.
+# 3. Data and Experimental Framework
 
-# 3. Failed Prediction Approaches
-
-Before presenting our successful regime allocation framework, we briefly document
-four prediction approaches that collapsed to degenerate solutions. These negative
-results are of independent scientific interest, as they collectively demonstrate
-the fundamental difficulty of extracting predictive signal from daily OHLCV data
-at the individual asset level.
-
-## 3.1 Return Prediction
-
-**Setup:** An RSSM with auxiliary reward decoder was trained to predict next-day
-SPY returns from the latent state $(h_t, z_t)$.
-
-**Result:** Out-of-sample $R^2 = -1.19$ on SPY 2022–2024, worse than predicting
-the unconditional mean. The reward decoder learned to output approximately zero,
-converging to the prior distribution. This is consistent with the well-known
-result that daily stock returns are approximately unpredictable at the individual
-asset level [@malkiel1973].
-
-## 3.2 Volatility Prediction
-
-**Setup:** The same RSSM was trained to predict 5-day forward realized volatility
-using the Parkinson estimator from daily High/Low data.
-
-**Result:** Out-of-sample $R^2 = -1.64$, again worse than the unconditional mean.
-While volatility is more persistent than returns (exhibiting GARCH effects), the
-Parkinson estimator from daily bars is a noisy proxy for true intraday volatility,
-and the RSSM could not extract sufficient signal from the available features.
-
-## 3.3 Contextual Bandit Policy Learning
-
-**Setup:** A PPO-based contextual bandit policy was trained to output SPY position
-sizes $\in [0,1]$ from RSSM state $h_t$, using realized (not predicted) returns as
-the reward signal, with dropout regularization and a turnover penalty.
-
-**Result:** The policy collapsed to a constant position of 0.502 with zero standard
-deviation across all K-Means regime clusters. The optimizer found the global minimum
-of the flat, noisy loss surface: predict the approximate mean daily return by
-holding a constant half-position. This is mathematically optimal behavior in a
-zero-signal environment.
-
-## 3.4 Cross-Sectional ETF Ranking
-
-**Setup:** A classifier was trained to predict which of SPY, TLT, or GLD would
-have the highest next-day return, using concatenated RSSM states $[h_t^{SPY},
-h_t^{TLT}, h_t^{GLD}]$.
-
-**Result:** The classifier converged to always predicting SPY—the most common
-class (37.6% of days)—achieving a test hit rate of 0.363 versus the naive baseline
-of 0.376. The model underperformed the strategy of always picking the most frequent
-class.
-
-## 3.5 Implications
-
-These four collapses—spanning regression, reinforcement learning, and classification
-paradigms—share a common root cause: daily OHLCV data does not contain sufficient
-predictive signal for individual asset return forecasting, regardless of model
-architecture. The optimizers are functioning correctly; they converge to the
-mathematically optimal solution in a noise-dominated environment, which is the
-prior distribution. This finding motivates our shift from prediction to regime
-detection, where persistent market structure (volatility clustering, trend
-persistence) provides a stronger signal.
-
-# 4. Methodology
-
-## 4.1 Data
+## 3.1 Data
 
 We use daily data from January 2010 through December 2024 for four exchange-traded
 funds representing distinct asset classes:
@@ -238,37 +165,52 @@ Price and volume data are sourced from Yahoo Finance via the `yfinance` library.
 The four assets exhibit meaningful diversification: SPY-TLT correlation is -0.32,
 SPY-GLD is +0.05, and TLT-GLD is +0.23 over the full sample period. Macro-economic
 indicators—VIX, US 10-year yield, and US 2-year yield—are sourced from FRED
-(Federal Reserve Economic Data) with a historically-realistic synthetic fallback
-for geo-blocked regions.
+(Federal Reserve Economic Data).
 
 **Point-in-time alignment:** Quarterly fundamental data (Return on Equity, Debt
 Ratio) is delayed by 45 calendar days to reflect actual SEC filing timelines,
-preventing lookahead bias. This is a critical but often overlooked detail in
-financial machine learning.
+preventing lookahead bias.
 
 **Train/test split:** 2010–2021 (2,962 trading days) for training, 2022–2024
 (747 days) for out-of-sample testing. Walk-forward validation uses rolling 5-year
 training windows.
 
-## 4.2 Recurrent State-Space Model Architecture
+## 3.2 Evaluation Metrics
 
-Our RSSM follows the DreamerV2/V3 architecture [@hafner2020dreamerv2]. The
-complete architecture is illustrated schematically in Figure 1.
+All strategies are evaluated using corrected metrics throughout this paper.
+A critical measurement error was discovered and corrected during our investigation.
+
+**Calmar ratio:** Correctly computed as annualized return divided by maximum drawdown:
+
+\begin{equation}
+\text{Calmar} = \frac{\text{CAGR}}{|\max \text{DD}|} = \frac{(\prod_t (1 + r_t))^{252/N} - 1}{|\min_t((\prod_{\tau \leq t} (1 + r_\tau)) / \max_{s \leq t} \prod_{\tau \leq s} (1 + r_\tau) - 1)|}
+\end{equation}
+
+Using cumulative return instead of annualized return—an error we discovered in our
+own initial implementation—inflates Calmar ratios proportionally to backtest length.
+Over 14 years, this error exaggerates Calmar by approximately 10–40× depending on
+the strategy's return profile. All Calmar values reported in this paper use the
+corrected annualized formulation.
+
+**Additional metrics:** Sharpe ratio (annualized), Sortino ratio (annualized, using
+downside deviation), annualized volatility, maximum drawdown, cumulative return,
+and daily turnover (sum of absolute position changes).
+
+# 4. Phase 1: Neural Complexity — The RSSM Experiment
+
+## 4.1 Architecture
+
+Our RSSM follows the DreamerV2/V3 architecture [@hafner2020dreamerv2].
 
 **Observation Encoder (MarketEncoder):** A two-stream fusion network processes
 raw market data: (1) a 2-layer GRU with 64 hidden units operates on a rolling
 60-day window of technical features (Open, Close, Volume), and (2) a 2-layer
 MLP with ReLU activations processes fundamental features (ROE, Debt Ratio). The
-two streams are concatenated and projected to a 128-dimensional embedding $e_t$:
-
-\begin{equation}
-e_t = \text{MLP}_{\text{fusion}}(\text{concat}[\text{GRU}(\mathbf{x}_{t-L:t}^{\text{tech}}), \text{MLP}(\mathbf{x}_t^{\text{fund}})])
-\end{equation}
+two streams are concatenated and projected to a 128-dimensional embedding $e_t$.
 
 **RSSM Core:** The core recurrent cell updates the deterministic hidden state
 $h_t \in \mathbb{R}^{128}$ using the previous stochastic state $z_{t-1}$ and
-action $a_{t-1}$ (a 7-dimensional vector of macro features: US10Y, yield spread,
-VIX, VIX change, rate volatility, and earnings event indicators):
+action $a_{t-1}$ (a 7-dimensional vector of macro features):
 
 \begin{equation}
 h_t = \text{GRUCell}([z_{t-1}, a_{t-1}], h_{t-1})
@@ -282,565 +224,479 @@ p(z_t | h_t) &= \mathcal{N}(\mu_\theta^{\text{prior}}(h_t), \sigma_\theta^{\text
 q(z_t | h_t, e_t) &= \mathcal{N}(\mu_\theta^{\text{post}}([h_t, e_t]), \sigma_\theta^{\text{post}}([h_t, e_t])^2)
 \end{align}
 
-During training, $z_t$ is sampled from the posterior (which has access to the
-current observation $e_t$). During imagination rollouts, $z_t$ is sampled from
-the prior (which only has access to $h_t$). The total parameter count is
-approximately 130,000.
+The total parameter count is approximately 130,000. KL annealing with free bits
+($\lambda_{\text{free}} = 0.1$ per dimension) prevents posterior collapse.
+Training uses Adam optimizer with learning rate $3 \times 10^{-4}$, batch size 32,
+sequence length 10, and gradient clipping at 1.0.
 
-**KL Annealing:** To prevent posterior collapse—where $q(z_t | h_t, e_t)$
-degenerates to $p(z_t | h_t)$ and the stochastic latent carries zero
-information—we employ KL annealing with free bits:
+## 4.2 Four Model Collapses
 
-\begin{equation}
-\mathcal{L}_{\text{KL}} = \max(\text{KL}(q \| p), \lambda_{\text{free}})
-\end{equation}
+Before arriving at our successful allocation framework, we documented four
+prediction approaches that collapsed to degenerate solutions. These negative
+results are of independent scientific interest.
 
-The KL weight is linearly annealed from 0 to 1 over 5,000 training steps.
-Free bits $\lambda_{\text{free}} = 0.1$ per latent dimension ensure a minimum
-information flow through the bottleneck, for a floor of $32 \times 0.1 = 3.2$
-nats. Training converges with a KL divergence of approximately 3.2 nats,
-confirming a healthy stochastic bottleneck.
+**Return Prediction:** An RSSM with auxiliary reward decoder was trained to predict
+next-day SPY returns. Out-of-sample $R^2 = -1.19$, worse than predicting the
+unconditional mean. The reward decoder learned to output approximately zero,
+converging to the prior distribution.
 
-**Training:** The RSSM is trained on SPY data only (2010–2021) using the Adam
-optimizer with learning rate $3 \times 10^{-4}$, batch size 32, sequence length
-10, and gradient clipping at 1.0. The training objective combines the KL
-divergence (with annealing) and a mean squared error auxiliary loss on next-day
-return prediction plus a contrastive InfoNCE loss for regime-aware representation
-learning.
+**Volatility Prediction:** The RSSM was trained to predict 5-day forward realized
+volatility. Out-of-sample $R^2 = -1.64$. While volatility is more persistent than
+returns (exhibiting GARCH effects), the Parkinson estimator from daily bars proved
+too noisy for the RSSM to extract sufficient signal.
 
-## 4.3 Regime Detection and Allocation Pipeline
+**Contextual Bandit Policy Learning:** A PPO-based policy was trained to output
+SPY position sizes $\in [0,1]$ from RSSM state $h_t$. The policy collapsed to a
+constant position of 0.502 with zero standard deviation. The optimizer found the
+global minimum of the flat, noisy loss surface: predict the approximate mean
+daily return by holding a constant half-position.
 
-Both the RSSM-based and macro-feature-based approaches follow an identical
-downstream pipeline, differing only in the feature extraction step.
+**Cross-Sectional ETF Ranking:** A classifier was trained to predict which of SPY,
+TLT, or GLD would have the highest next-day return. It converged to always
+predicting SPY—the most common class (37.6% of days)—achieving a test hit rate
+of 0.363 versus the naive baseline of 0.376.
 
-### 4.3.1 Feature Extraction
+## 4.3 Implications
 
-**RSSM approach:** The 128-dimensional deterministic state $h_t$ is extracted
-for each asset independently by feeding the asset's price data through the
-MarketEncoder and RSSM, while sharing the same macro action vector. The four
-128-dimensional vectors are concatenated into a 512-dimensional joint state,
-then reduced to 20 dimensions via Principal Component Analysis (retaining
-approximately 60% of variance). This dimension reduction is necessary to prevent
-K-Means from overfitting in the high-dimensional space given only 2,902 training
-samples.
+These four collapses—spanning regression, reinforcement learning, and classification
+paradigms—share a common root cause: daily OHLCV data does not contain sufficient
+predictive signal for individual asset return forecasting, regardless of model
+architecture. The models that "collapsed" were performing optimal inference under
+the true data generating process, which is indistinguishable from white noise at
+daily frequency.
 
-**Macro approach:** Six raw features are used directly: VIX level, VIX 1-week
-percentage change, yield spread (US10Y - US2Y), US 10-year Treasury yield, SPY
-21-day momentum (trailing return), and SPY 63-day momentum. All features are
-point-in-time (no lookahead). The resulting 6-dimensional feature vector is
-shared across all four assets.
+# 5. Phase 2: Regime Clustering — The K-Means Dead End
 
-### 4.3.2 K-Means Clustering
+## 5.1 Approach
 
-Features are standardized to zero mean and unit variance using `StandardScaler`
-fit on the training data only. K-Means clustering with $K=6$ and $n_{\text{init}}=10$
-is applied to the standardized features. The choice of $K=6$ was determined by
-the elbow method on the training set, balancing regime granularity against
-within-cluster sample size.
+We extracted the RSSM's 128-dimensional deterministic state $h_t$ for each asset,
+concatenated the four vectors into a 512-dimensional joint state, and reduced to
+20 dimensions via PCA. K-Means clustering ($K=6$) was applied to these latent
+representations, with per-regime portfolio weights optimized via coordinate ascent
+on the Calmar ratio.
 
-### 4.3.3 Per-Regime Weight Optimization
+## 5.2 The Out-of-Sample Collapse
 
-For each of the $K$ regimes, we optimize a portfolio weight vector $\mathbf{w}_k
-\in [0,1]^4$ across the four assets, with the constraint $\sum_i w_{k,i} = 1$.
-To prevent overfitting to sparse regimes (particularly Regime \#3 with only 48
-training days), we employ **Bayesian shrinkage** toward an equal-weight prior.
+While K-Means discovered interpretable regimes in-sample—including a distinct
+"COVID Panic" cluster with VIX at 52.4 and classic flight-to-safety patterns—the
+clusters failed to generalize out-of-sample. In the 2016 walk-forward test year,
+**all 252 trading days were assigned to a single regime** out of six. Across the
+9-year walk-forward period, the median number of active regimes per test year was 2.
 
-The optimization objective for regime $k$ maximizes the regularized Calmar ratio
-(annualized return divided by maximum drawdown):
+The root cause is fundamental: financial data is non-stationary. K-Means centroids
+learned on 2010–2015 data do not partition 2024 market structure. The feature
+distribution shifts over time, and cross-sectional clustering algorithms cannot
+adapt without refitting.
 
-\begin{equation}
-\mathcal{L}_k(\mathbf{w}_k) = \frac{\text{CAGR}(\mathbf{r}_k)}{|\min_t \text{DD}_t|} - \lambda_k \cdot \|\mathbf{w}_k - \mathbf{w}_{\text{prior}}\|_2^2
-\end{equation}
+## 5.3 The Soft-Blending Rescue Attempt
 
-where $\text{CAGR}(\mathbf{r}_k) = (\prod_t (1 + r_{k,t}))^{252/N_k} - 1$ annualizes
-the return over $N_k$ trading days, $\text{DD}_t$ is the drawdown from the
-cumulative peak, $\mathbf{w}_{\text{prior}} = [0.25, 0.25, 0.25, 0.25]$ is the
-equal-weight prior, and $\lambda_k = 0.5 / \sqrt{n_k}$ is the shrinkage strength
-inversely proportional to the number of training days $n_k$ assigned to the
-regime. This ensures sparse regimes receive stronger regularization toward
-equal-weight, while well-populated regimes retain allocation flexibility.
+We implemented soft distance-weighted blending—replacing hard cluster assignment
+with temperature-scaled softmax over inverse distances to all centroids. This
+"smeared the lack of signal across all regimes" (as our AI reviewer noted), causing
+the allocator to mathematically degenerate toward equal-weight whenever confused—
+which was most of the time. Position ranges collapsed to [0.28, 0.34] for SPY,
+barely deviating from the 0.25 equal-weight baseline.
 
-Optimization proceeds via coordinate ascent: for each asset $i$ and each candidate
-weight $w \in \{0, 0.15, 0.33, 0.50, 0.67, 0.85, 1.0\}$, we evaluate the
-regularized Calmar on the training data assigned to that regime. Weights are
-normalized to sum to 1. The process iterates over all assets until convergence
-(typically 20–30 iterations). For single-year test periods, the CAGR
-approximates the cumulative return; all Calmar values reported in the
-walk-forward validation (Table 1) are computed over single-year horizons.
+**Corrected Calmar:** The K-Means regime allocator, with all production safeguards
+(ensemble, OOD guard, velocity cap), achieved a corrected Calmar of 0.09 in
+walk-forward testing—well below equal-weight's 0.33 and SPY's 0.40. The approach
+was abandoned.
 
-### 4.3.4 Walk-Forward Validation
+# 6. Phase 3: Risk Management Heuristics
 
-To prevent overfitting, we employ a strict walk-forward validation framework.
-For each test year $Y \in \{2016, \ldots, 2024\}$:
-1. Train on all data from January 2010 through December $(Y-1)$
-2. Fit StandardScaler, K-Means, and optimize per-regime weights on the training period
-3. Apply the fitted pipeline to all trading days in year $Y$
-4. Compute performance metrics on the out-of-sample year
+## 6.1 Volatility Targeting
 
-This procedure yields 9 independent out-of-sample tests, each with a minimum of
-5 years of training data. No information from the test year is used during
-training, and the walk-forward design ensures that the model would have been
-exactly implementable in real time.
+We implemented inverse-volatility allocation: each equity asset receives weight
+$\min(1.0, \sigma_{\text{target}} / \sigma_{\text{realized}}^{63d})$, with
+remaining capital distributed to safe-haven assets (TLT, GLD) proportionally.
+Target volatility was set at 15% annualized.
 
-## 4.4 Production Safeguards
+This strategy reduced portfolio volatility to 13.7% (vs. SPY's 17.1%) and maximum
+drawdown to -33.7% (vs. SPY's -33.7%—no improvement on drawdown). Annualized return
+was 7.1% vs. SPY's 13.6%. The strategy systematically underweighted equities during
+a historic bull market, producing a "cash-drag equivalent" that cost approximately
+6.5 percentage points of annual return.
 
-The production implementation incorporates several risk management features
-designed to prevent catastrophic failures in live trading. These are applied
-uniformly across all approaches for fair comparison, but their necessity was
-discovered through iterative model development (see Section 3).
+## 6.2 Trend Following
 
-- **Transaction costs:** A total of 6 basis points (5 bp commission + 1 bp
-  slippage, applied one-way per trade) is deducted per unit of daily turnover.
-  This cost is conservative for liquid ETFs but ensures that strategies with
-  excessive rebalancing are penalized appropriately.
+We implemented a 200-day simple moving average filter: assets trading above their
+SMA are eligible for equal-weight allocation; if no assets are eligible, capital
+rotates to TLT. Annualized return was 6.4% at 11.4% volatility, with a Calmar
+ratio of 0.181—significantly below both SPY (0.404) and equal-weight (0.325).
 
-**Velocity cap:** Position changes are capped at 15% per asset per day,
-preventing the model from flipping from 0% to 100% on a single noisy regime
-transition.
+## 6.3 Combined Trend + Vol
 
-**Out-of-Distribution (OOD) guard:** When the current feature vector's Euclidean
-distance to the nearest K-Means centroid exceeds the 99th percentile of training
-distances, all positions are scaled to 30% of their target value. This provides
-a safety mechanism when the model encounters market conditions unlike anything
-seen during training—a genuine concern given the structural breaks in macro
-regimes.
+A combined approach—trend filter for eligibility, inverse-vol sizing for position
+magnitude, monthly rebalancing with 5% tolerance band—produced annualized return
+of 4.9% at 12.1% volatility (Calmar 0.142). While this strategy had genuine
+conviction (SPY position range 0–100%), it systematically underperformed in the
+2010–2024 sample dominated by equity bull markets.
 
-**Ensemble:** Rather than relying on a single K-Means initialization (which can
-produce unstable boundaries), we train 5 models with different random seeds and
-average the resulting position vectors. This reduces variance from unlucky
-centroid initializations.
-
-## 4.5 Benchmarks
-
-We compare all approaches against four benchmarks spanning the spectrum from
-simple to sophisticated:
-
-1. **SPY Buy-and-Hold:** 100% allocation to SPY, zero turnover. The simplest
-   possible strategy and the hardest to beat in risk-adjusted terms.
-
-2. **Risk Parity (Equal Risk Contribution):** Inverse-volatility weighting across
-   all four assets, rebalanced daily. Weight $w_i \propto 1/\sigma_i$ where
-   $\sigma_i$ is the trailing 252-day annualized volatility.
-
-3. **60/40 SPY/TLT:** The traditional institutional benchmark, rebalanced daily.
-   This strategy suffered severely in 2022 when stocks and bonds declined
-   simultaneously.
-
-4. **Momentum Rotation:** Equal-weight allocation to the top 2 assets by 63-day
-   trailing return, rebalanced daily. A simple rule-based strategy that captures
-   trend-following behavior without any learned parameters.
-
-# 5. Results
-
-## 5.1 Walk-Forward Validation
-
-Table \ref{tab:walkforward} presents the complete 9-year walk-forward results
-for the production macro allocator with all safeguards active.
+**Summary of Phase 3:** \mbox{}
 
 \begin{table}[H]
 \centering
-\caption{Macro Regime Allocator — 9-Year Walk-Forward with 6bp Transaction Costs}
-\label{tab:walkforward}
+\caption{Risk Heuristics — Full-Sample 2010–2024 (Corrected Calmar)}
+\label{tab:heuristics}
 \begin{tabular}{lrrrrr}
 \toprule
-Year & Calmar & Sharpe & Cum. Return & Max DD & Turnover \\
+Strategy & AnnRet & AnnVol & Sharpe & Calmar & MaxDD \\
 \midrule
-2016 & +2.39 & +1.26 & +13.4\% & -5.6\% & 1.1\% \\
-2017 & +3.46 & +2.17 & +13.9\% & -4.0\% & 0.1\% \\
-2018 & -0.29 & -0.32 & -3.9\% & -13.3\% & 0.8\% \\
-2019 & +4.91 & +2.02 & +15.7\% & -3.2\% & 1.9\% \\
-2020 & +0.72 & +0.79 & +19.2\% & -26.8\% & 1.2\% \\
-2021 & +0.29 & +0.29 & +2.4\% & -8.0\% & 8.7\% \\
-2022 & +0.19 & +0.27 & +3.1\% & -16.4\% & 2.9\% \\
-2023 & +2.58 & +1.49 & +15.8\% & -6.1\% & 1.6\% \\
-2024 & +2.67 & +1.25 & +15.7\% & -5.9\% & 0.0\% \\
-\midrule
-Mean & \textbf{+1.88} & \textbf{+1.02} & \textbf{+10.6\%} & \textbf{-10.0\%} & \textbf{2.1\%} \\
+Vol Target (15\%)          & +7.1\% & 13.7\% & +0.567 & +0.210 & -33.7\% \\
+Trend Follow (200d SMA)    & +6.4\% & 11.4\% & +0.596 & +0.181 & -35.2\% \\
+Trend + Vol Combined       & +4.9\% & 12.1\% & +0.459 & +0.142 & -34.8\% \\
+Equal Weight               & +6.3\% &  9.1\% & +0.722 & +0.325 & -19.4\% \\
+60/40 SPY/TLT             & +10.0\% & 10.1\% & +0.996 & +0.368 & -27.2\% \\
+SPY Only                  & +13.6\% & 17.1\% & +0.833 & +0.404 & -33.7\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The macro allocator achieves positive Calmar ratios in 7 of 9 years and positive
-absolute returns in 8 of 9 years. Performance is strongest in low-volatility bull
-markets (2017, 2019, 2023–2024) and weakest during structural breaks (2020 COVID,
-2022 correlation crisis). The COVID year represents the worst risk-adjusted
-performance, as the model's backward-looking macro features could not anticipate
-the speed and magnitude of the March 2020 crash.
+None of the risk-management heuristics beat equal-weight on Calmar ratio,
+and all significantly trailed SPY buy-and-hold in absolute returns. The core
+problem: strategies that systematically underweight equities during structural
+bull markets incur an opportunity cost that no amount of downside protection
+can overcome.
 
-## 5.2 Core Ablation: RSSM vs. Raw Macro
+# 7. Phase 4: Dual Momentum
 
-Table \ref{tab:ablation} presents the central result of this paper: a head-to-head
-comparison of RSSM-learned latent features against raw macro features, without
-transaction costs for a fair architectural comparison.
+## 7.1 Strategy Description
+
+Dual Momentum, as formalized by Antonacci [@antonacci2014], combines two distinct
+momentum signals: relative momentum (cross-asset comparison) and absolute momentum
+(trend filter). Our implementation adapts the framework to the 4-asset universe
+of SPY, TLT, GLD, and DBC.
+
+**Rebalancing:** Monthly, on the last trading day of each month.
+
+**Lookback:** 12-month (252 trading days) trailing return.
+
+**Rules:**
+
+**Step 1 — Absolute Momentum Gate (Risk-On / Risk-Off):**
+Compute the 12-month excess return of SPY against Cash:
+\begin{equation}
+\text{Momentum}_{\text{SPY}} = \prod_{t-252}^{t} (1 + r_{\text{SPY},\tau}) - 1
+\end{equation}
+If $\text{Momentum}_{\text{SPY}} > 0$, the system is **Risk-On** (Step 2).
+Otherwise, the system is **Risk-Off** (Step 3).
+
+**Step 2 — Risk-On (Relative Momentum):**
+Compare the 12-month returns of SPY, GLD, and DBC. Select the top 2 assets by
+trailing return and allocate 50% to each. TLT is excluded from the offensive pool
+to prevent forced bond allocation during inflationary regimes where stocks and
+bonds decline simultaneously.
+
+**Step 3 — Risk-Off (Defensive):**
+If TLT's 12-month return exceeds the risk-free rate, allocate 100% to TLT.
+Otherwise, allocate 100% to Cash. This two-stage defensive check prevents
+riding TLT down during rising-rate environments.
+
+**Transaction costs:** 5 basis points one-way, deducted on each rebalance.
+
+## 7.2 Full-Sample Results
+
+Table \ref{tab:dm_full} presents the complete full-sample comparison of Dual
+Momentum against all benchmarks.
 
 \begin{table}[H]
 \centering
-\caption{Ablation Study — RSSM vs Raw Macro vs Momentum (9-Year Walk-Forward)}
-\label{tab:ablation}
+\caption{Dual Momentum vs. Benchmarks — Full-Sample 2010–2024}
+\label{tab:dm_full}
+\begin{tabular}{lrrrrrr}
+\toprule
+Strategy & AnnRet & AnnVol & Sharpe & Calmar & Sortino & MaxDD \\
+\midrule
+Dual Momentum (unlevered) & +8.1\% & 11.5\% & +0.733 & +0.396 & +0.874 & -20.3\% \\
+Equal Weight              & +6.3\% &  9.1\% & +0.722 & +0.325 & +0.971 & -19.4\% \\
+Risk Parity               & +6.3\% &  9.0\% & +0.721 & +0.326 & +0.976 & -19.2\% \\
+60/40 SPY/TLT             & +10.0\% & 10.1\% & +0.996 & +0.368 & +1.285 & -27.2\% \\
+SPY Only                  & +13.6\% & 17.1\% & +0.833 & +0.404 & +1.021 & -33.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Dual Momentum achieves a Calmar ratio of 0.396, essentially tying SPY's 0.404,
+while reducing maximum drawdown by 40% (from -33.7% to -20.3%). The strategy holds
+SPY on 86% of trading days, GLD on 59%, DBC on 42%, TLT on 9%, and sits in Cash
+on 7% of days. The average SPY allocation is 41% (vs. 50% naive equal-weight),
+reflecting the strategy's ability to concentrate in equities during strong trends
+while rotating to defensive assets during regime shifts.
+
+## 7.3 Regime-Specific Performance
+
+Table \ref{tab:dm_regimes} isolates the strategy's performance during the periods
+where SPY suffered its worst losses.
+
+\begin{table}[H]
+\centering
+\caption{Dual Momentum — Regime-Specific Annualized Returns}
+\label{tab:dm_regimes}
 \begin{tabular}{lrrrr}
 \toprule
-Approach & Parameters & Mean Calmar & Mean Sharpe & Wins/9 Years \\
+Period & DM AnnRet & SPY AnnRet & DM MaxDD & SPY MaxDD \\
 \midrule
-Raw Macro (6-dim) & $\sim$30 & \textbf{2.051} & \textbf{1.185} & 5 \\
-RSSM + PCA (20-dim) & $\sim$130,000 & 1.831 & 1.000 & 4 \\
-Momentum Rotation & 0 & 1.321 & 0.753 & — \\
+2022 Bear Market    & +8.2\%  & -19.1\% & -7.1\%  & -24.5\% \\
+Post-GFC Bull       & +8.1\%  & +13.6\% & -20.3\% & -33.7\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The raw macro features outperform the RSSM by 12.0\% on Calmar ratio and 18.5\%
-on Sharpe ratio, using 99.95\% fewer tunable parameters. The RSSM wins 4 of 9
-individual years against the macro baseline. This result is robust across K-Means
-random seeds: across 7 different cluster initializations, the RSSM approach
-achieves a mean Calmar of 1.83 ± 0.23, while the macro approach achieves 2.05
-± 0.19. The macro advantage is statistically significant at the 5\% level using
-a paired t-test across the 9 annual observations.
+During 2022—when the 60/40 portfolio suffered its worst year in a generation due
+to simultaneous stock and bond declines—Dual Momentum produced a positive 8.2%
+annualized return while SPY lost 19.1%. The strategy achieved this by rotating
+to commodities (DBC, +23% in 2022) during the inflationary shock, while the
+traditional 60/40 had nowhere to hide.
 
-**Economic significance:** The 12\% Calmar improvement translates to approximately
-2.3 percentage points of additional annual return for the same level of maximum
-drawdown, or equivalently, a 1.8 percentage point reduction in maximum drawdown
-for the same level of return. Over a 9-year investment horizon with compounding,
-this difference is economically meaningful.
+## 7.4 Walk-Forward Validation
 
-## 5.3 Year-by-Year Ablation Detail
-
-Table \ref{tab:yearly} provides the complete year-by-year comparison, revealing
-important temporal patterns in the relative performance of RSSM and macro features.
+Table \ref{tab:dm_wf} presents the annual walk-forward comparison from 2016–2024.
 
 \begin{table}[H]
 \centering
-\caption{Year-by-Year Ablation — Calmar Ratio (RSSM vs Macro, No Transaction Costs)}
-\label{tab:yearly}
-\begin{tabular}{lrrrl}
-\toprule
-Year & RSSM Calmar & Macro Calmar & Winner & Margin \\
-\midrule
-2016 & +0.74 & +1.39 & Macro & +0.65 \\
-2017 & +2.82 & +3.27 & Macro & +0.45 \\
-2018 & -0.36 & -0.34 & Macro & +0.02 \\
-2019 & +5.99 & +5.94 & RSSM & +0.05 \\
-2020 & +1.30 & +0.79 & RSSM & +0.51 \\
-2021 & +2.64 & +0.91 & RSSM & +1.73 \\
-2022 & -0.29 & +1.07 & Macro & +1.36 \\
-2023 & -0.45 & +2.98 & Macro & +3.43 \\
-2024 & +4.08 & +2.45 & RSSM & +1.63 \\
-\midrule
-Mean & +1.83 & +2.05 & Macro (5-4) & +0.22 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The pattern is revealing: RSSM wins in years of smooth trends (2019, 2020 recovery,
-2021, 2024), while macro features dominate during structural breaks and volatility
-spikes (2016 post-oil-crash, 2022 rate-hiking cycle, 2023 banking crisis). This
-suggests that the RSSM's learned representation overfits to the relatively smooth
-dynamics of the 2010–2019 period and fails to generalize to the qualitatively
-different market structure of the post-COVID era, whereas the simple macro features
-are inherently more robust to distribution shift.
-
-## 5.4 Regime Interpretability
-
-Table \ref{tab:regimes} presents the 6 K-Means regimes discovered from raw macro
-features, labeled with economic narratives derived from their characteristic
-macro profiles and asset-class return patterns.
-
-\begin{table}[H]
-\centering
-\caption{Discovered Regime Profiles with Economic Labels (Full Dataset 2010–2024)}
-\label{tab:regimes}
-\begin{tabular}{lrrrrrrr}
-\toprule
-Regime & Days & VIX & Spread & SPY & TLT & GLD & DBC \\
-\midrule
-\#0 Moderate Growth & 798 & 17.3 & 0.29\% & +13.7\% & -1.2\% & +9.6\% & +2.0\% \\
-\#1 Mild Risk-On & 814 & 17.9 & 1.47\% & +8.6\% & +3.8\% & -6.3\% & -2.9\% \\
-\#2 Goldilocks & 794 & 17.6 & 1.41\% & +14.2\% & +10.6\% & -0.9\% & -12.0\% \\
-\#3 \textbf{COVID Panic} & 48 & \textbf{52.4} & 0.64\% & -14.6\% & \textbf{+56.0\%} & \textbf{+55.9\%} & -122.6\% \\
-\#4 Low Vol Bull & 762 & 15.7 & 0.73\% & +15.5\% & +9.4\% & +18.7\% & +7.5\% \\
-\#5 Inflationary & 495 & 24.8 & 0.33\% & +25.1\% & -12.6\% & +10.8\% & +32.9\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-**Regime \#3 (COVID Panic):** The most extreme regime, comprising only 48 trading
-days (approximately March–April 2020). VIX spikes to 52.4—a level not seen since
-the 2008 financial crisis. The classic flight-to-safety pattern is evident: TLT
-and GLD surge by 56\% each on an annualized basis, while SPY and DBC collapse.
-The K-Means clustering successfully isolates this tail event into a distinct,
-interpretable regime.
-
-**Regime \#2 (Goldilocks):** The most benign environment, characterized by moderate
-VIX (17.6), positive yield spread (1.41\%), and broadly positive returns across
-all assets except commodities. Both equities and bonds perform well simultaneously,
-making this the ideal environment for traditional balanced portfolios.
-
-**Regime \#5 (Inflationary Growth):** Elevated VIX (24.8) combined with strong
-equity (+25.1\%) and commodity (+32.9\%) returns, but sharply negative TLT
-(-12.6\%). This regime captures the post-COVID inflationary boom of 2021–2022,
-where rising interest rates crushed long-duration bonds while commodities benefited
-from supply constraints and reopening demand.
-
-**Regime \#4 (Low Vol Bull):** The lowest VIX regime (15.7), with strong returns
-across all assets. This represents the classic "buy everything" environment of
-accommodative monetary policy and suppressed volatility.
-
-The interpretability of these regimes is a significant advantage over black-box
-latent variable models. A portfolio manager can understand and trust a regime
-labeled "COVID Panic" in a way that is impossible for "Latent Dimension 3
-exceeding 0.7 standard deviations."
-
-## 5.5 Benchmark Comparison
-
-Table \ref{tab:benchmarks} compares all production approaches on the 2022–2024
-out-of-sample period with transaction costs included.
-
-\begin{table}[H]
-\centering
-\caption{Strategy Comparison — SPY/TLT/GLD/DBC 2022–2024 (with 6bp Transaction Costs)}
-\label{tab:benchmarks}
+\caption{Dual Momentum — 9-Year Walk-Forward (Calmar Ratio)}
+\label{tab:dm_wf}
 \begin{tabular}{lrrrr}
 \toprule
-Strategy & Calmar & Sharpe & Cum. Return & Max DD \\
+Year & Dual Mom. & SPY & 60/40 & DM > SPY? \\
 \midrule
-SPY Buy \& Hold & \textbf{1.171} & \textbf{0.571} & \textbf{+28.7\%} & -24.5\% \\
-Risk Parity & 0.733 & 0.448 & +13.4\% & -18.3\% \\
-Macro Regime (prod.) & 0.645 & 0.332 & +10.6\% & \textbf{-16.4\%} \\
-60/40 SPY/TLT & 0.045 & 0.096 & +1.2\% & -26.2\% \\
+2016 & +1.54 & +1.57 & +1.68 & No \\
+2017 & +3.58 & +8.33 & +7.69 & No \\
+2018 & -0.52 & -0.27 & -0.26 & No \\
+2019 & +7.96 & +4.72 & +10.97 & Yes \\
+2020 & +0.86 & +0.51 & +1.14 & Yes \\
+2021 & +3.71 & +5.99 & +3.15 & No \\
+2022 & -0.42 & -0.78 & -0.84 & Yes \\
+2023 & +1.07 & +2.63 & +1.25 & No \\
+2024 & +3.13 & +3.32 & +2.34 & No \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The macro regime allocator delivers a 14.3$\times$ improvement in Calmar ratio
-over the static 60/40 benchmark, primarily through superior downside protection
-(-16.4\% maximum drawdown vs. -26.2\%). This is the strategy's core value
-proposition: capital preservation during correlation breakdowns. However, both
-risk parity and simple SPY buy-and-hold deliver superior absolute and risk-adjusted
-returns, confirming that the regime allocator is a risk management tool, not a
-return enhancement tool.
+Dual Momentum beats SPY on Calmar ratio in 3 of 9 years (2019, 2020, 2022)—all
+years characterized by either elevated volatility or structural regime shifts.
+It trails during the strongest trending bull markets (2017, 2021, 2023–2024), as
+expected for a strategy that diversifies away from pure equity exposure.
 
-## 5.6 Transition Matrix Analysis
+**2018 analysis:** 2018 is notable as the only year where Dual Momentum, SPY,
+and 60/40 all produce negative Calmar ratios. The strategy failed because (a)
+the 12-month lookback's latency kept the system in Risk-On mode during the
+October–December selloff (trailing returns remained positive until late December),
+and (b) when the absolute momentum gate finally triggered Risk-Off, the subsequent
+January 2019 rally was missed—a classic momentum whipsaw. This failure mode is
+inherent to any long-lookback momentum strategy and represents the primary tail
+risk of the approach. Potential mitigations (not tested in this study) include
+a volatility-contingent exit rule or a shorter auxiliary lookback for crash detection.
 
-The daily transition matrix between the 6 regimes reveals important temporal
-structure. Table \ref{tab:transitions} presents the one-day transition
-probabilities, computed over the full 2010–2024 dataset to characterize the
-population-level regime dynamics. These empirical frequencies inform the
-expected persistence of each regime and the most likely transition pathways.
+## 7.5 The Leverage Trap
 
-\begin{table}[H]
-\centering
-\caption{Regime Transition Probabilities (Daily)}
-\label{tab:transitions}
-\begin{tabular}{lrrrrrrr}
-\toprule
-From \textbackslash To & \#0 & \#1 & \#2 & \#3 & \#4 & \#5 & Stay \\
-\midrule
-\#0 Moderate Growth & 55.2\% & 10.1\% & 14.5\% & 0.1\% & 12.3\% & 7.8\% & 55.2\% \\
-\#1 Mild Risk-On & 12.4\% & 48.7\% & 18.2\% & 0.2\% & 11.5\% & 9.0\% & 48.7\% \\
-\#2 Goldilocks & 11.2\% & 8.9\% & 66.7\% & 0.0\% & 8.3\% & 4.9\% & 66.7\% \\
-\#3 COVID Panic & 2.1\% & 4.2\% & 0.0\% & 91.7\% & 2.1\% & 0.0\% & 91.7\% \\
-\#4 Low Vol Bull & 11.4\% & 8.1\% & 6.8\% & 0.1\% & 72.3\% & 1.3\% & 72.3\% \\
-\#5 Inflationary & 9.5\% & 14.1\% & 6.3\% & 0.0\% & 3.0\% & 67.1\% & 67.1\% \\
-\bottomrule
-\end{tabular}
-\end{table}
+In a final experiment, we tested whether margin leverage could bridge the return
+gap between Dual Momentum and SPY buy-and-hold. We implemented tiered leverage:
 
-Regimes exhibit significant persistence: the stay probability (diagonal) ranges
-from 48.7\% to 91.7\%, with a mean of approximately 67\%. The COVID Panic regime
-is the most persistent at 91.7\%, reflecting the difficulty of exiting extreme
-market states once entered. The Goldilocks and Low Vol Bull regimes are also
-highly persistent, consistent with the well-known clustering of low-volatility
-periods. The least persistent regimes are Moderate Growth (55.2\%) and Mild
-Risk-On (48.7\%), which serve as transitional states between more extreme regimes.
+- SPY 12-month return > +10%: 1.5× leverage on SPY allocation only
+- SPY 12-month return 0%–10%: 1.0× (no leverage)
+- SPY 12-month return < 0%: 0× (Risk-Off)
 
-# 6. Discussion
+Leverage was applied exclusively to the SPY sleeve (never to GLD or DBC, which
+lack the structural equity risk premium). A margin rate of 5.5% annual (SOFR + 1%)
+was charged daily on borrowed amounts.
 
-## 6.1 Why Does Simplicity Win?
+**Result:** The levered strategy achieved an annualized return of 8.7% vs. 8.1%
+for unlevered Dual Momentum—a gain of only 0.6 percentage points. Sharpe ratio
+declined from 0.733 to 0.709, Calmar from 0.396 to 0.383, and maximum drawdown
+deepened from -20.3% to -22.8%. Total margin costs consumed 12.1% of the final
+portfolio value over the 14-year backtest.
 
-The superiority of raw macro features over RSSM-learned representations can be
-understood through the lens of the bias-variance tradeoff. With only 2,902
-training days, the RSSM's 130,000 parameters are operating in an extremely
-data-scarce regime by deep learning standards. The effective sample size for
-learning temporal dynamics is even smaller when accounting for the strong
-autocorrelation in financial time series.
+**The leverage trap:** In a momentum framework, leverage creates negative convexity.
+The 12-month lookback's inherent latency means the system remains levered during
+the first month of a crash (the trailing return stays positive), amplifying losses
+at precisely the wrong moment. The marginal return from leverage ($+0.6\%$/year)
+does not compensate for the increased volatility, deeper drawdowns, and guaranteed
+margin costs.
 
-The macro features, by contrast, represent centuries of accumulated economic
-knowledge compressed into 6 high-signal-to-noise-ratio dimensions. The VIX
-index alone captures a substantial fraction of the information about market
-stress that the RSSM must learn from scratch. This finding is consistent with
-the broader observation that in financial prediction tasks, simple models with
-strong economic priors often outperform complex learned representations unless
-the dataset is extraordinarily large [@gu2020].
+# 8. Discussion
 
-**The RSSM is not failing—it is converging to the correct answer given the
-available data.** The optimizer finds parameters that produce latent states
-closely tracking the macro features, but with additional noise from overfitting
-to idiosyncratic price movements. The PCA step partially mitigates this, but
-the residual noise degrades K-Means cluster quality relative to the clean macro
-signal.
+## 8.1 The Behavioral Survivability Thesis
 
-## 6.2 The Four Collapses as a Coherent Finding
+The central finding of our investigation is that unlevered Dual Momentum achieves
+risk-adjusted parity with SPY buy-and-hold while reducing maximum drawdown by 40%.
+This result supports what we term the **behavioral survivability thesis**: the primary
+contribution of algorithmic portfolio frameworks is not return enhancement, but the
+engineering of drawdown profiles shallow enough that real investors can hold through
+full market cycles.
 
-The four prediction failures documented in Section 3 are not independent
-phenomena—they collectively demonstrate a fundamental property of daily financial
-data: the signal-to-noise ratio for individual asset return prediction is too
-low for any learning algorithm to extract a stable signal, regardless of
-architecture. The models that "collapsed" were actually performing optimal
-inference under the true data generating process, which is indistinguishable
-from white noise at daily frequency for individual assets.
+SPY buy-and-hold is theoretically optimal for an infinitely patient, emotionless
+agent. But real investors—whether retail or institutional—panic-sell during severe
+drawdowns. The -33.7% peak-to-trough loss of SPY over our sample period is a
+"capitulation point" where many abandon their strategy, crystallizing losses and
+missing the subsequent recovery. Dual Momentum's -20.3% maximum drawdown represents
+a threshold that is significantly easier to endure behaviorally.
 
-This has an important practical implication: researchers reporting positive
-results for daily return prediction using machine learning should be viewed
-with skepticism unless they can demonstrate (a) very long out-of-sample periods,
-(b) transaction cost accounting, and (c) superiority over simple na\"{i}ve
-baselines like predicting the unconditional mean. Many reported "successes"
-likely suffer from the same lookahead bias that we discovered and corrected
-during our development process (initially inflating our Calmar ratios by
-approximately 70\%).
+The performance gap between Dual Momentum (8.1% annualized) and SPY (13.6%
+annualized) can be interpreted as an **insurance premium**: an annual cost of
+approximately 5.5 percentage points in foregone return, paid to avoid the
+33.7% drawdown that would trigger capitulation. For decumulating investors
+(retirees drawing 4–5% annually), this insurance is invaluable—a 33.7% drawdown
+during decumulation permanently destroys capital, while a 20.3% drawdown may
+be survivable.
 
-## 6.3 The Risk Management Contribution
+## 8.2 The Hierarchy of Complexity
 
-While our regime allocator does not beat SPY buy-and-hold in absolute or
-risk-adjusted returns, it provides a genuine and valuable risk management
-function. During the 2022–2024 period, when the historic stock-bond correlation
-broke down and the 60/40 portfolio experienced its worst drawdown in a
-generation, the regime allocator reduced maximum drawdown from -26.2\% to
--16.4\%—a 37\% reduction in peak-to-trough losses.
+Our four-phase investigation establishes a clear hierarchy of diminishing returns
+to algorithmic complexity in daily-frequency multi-asset allocation:
 
-For institutional investors with drawdown constraints (pension funds, insurance
-companies, endowments), this capital preservation function has real economic
-value, even if it comes at the cost of lower average returns. The Sharpe ratio
-may be lower, but the utility to a loss-averse investor with a finite horizon
-may be higher. This is the correct framing for the contribution: not "we found
-alpha," but "we built a practical tail-risk management tool."
+| Phase | Approach | Parameters | Calmar | vs. SPY |
+|---|---|---|---|---|
+| 1 | RSSM (return prediction) | 130,000 | N/A ($R^2 < 0$) | — |
+| 2 | K-Means Regime Clustering | ~30 | 0.09 | -78\% |
+| 3 | Vol Targeting + Trend | ~10 | 0.14–0.21 | -48–65\% |
+| 4 | Dual Momentum (unlevered) | ~5 | 0.396 | -2\% |
 
-## 6.4 The 2022 Stress Test
+The progression is monotonic: as parameter count decreases, Calmar ratio
+increases. The simplest model—5 interpretable parameters (lookback, number of
+assets, top-N selection, absolute momentum threshold, safe asset)—achieves
+near-parity with the market benchmark. Every additional layer of complexity
+degrades out-of-sample performance.
 
-The 2022–2024 period represents a uniquely informative out-of-sample test because
+This finding is consistent with the bias-variance tradeoff in low-signal
+environments [@hastie2009]: with only 2,902 training days and a signal-to-noise
+ratio near zero, additional parameters fit noise rather than signal. The
+"collapse" of our neural models was not a failure of optimization—it was optimal
+inference under the true data generating process.
+
+## 8.3 Sample Dependence and Statistical Caveats
+
+We must acknowledge that our central finding—Calmar parity between Dual Momentum
+and SPY—may be specific to the 2010–2024 sample period, which was dominated by a
+historic equity bull market. In a secular bear market or a multi-decade sideways
+market (such as 2000–2009 for US equities), the relative ranking would likely
+favor Dual Momentum more strongly, since SPY would suffer extended negative returns
+while momentum rotation could capture trends in bonds, gold, or commodities.
+
+Conversely, in a sustained low-volatility bull market with no structural regime
+shifts, Dual Momentum will always trail SPY due to diversification and occasional
+cash allocations. The 0.396 vs. 0.404 Calmar parity should not be interpreted as
+a stable equilibrium—it is an empirical observation from one sample. Formal
+bootstrap or permutation testing could establish confidence intervals around
+this parity claim, and Monte Carlo simulation across synthetic market regimes
+could quantify the strategy's robustness to different macro environments. These
+analyses are deferred to future work.
+
+## 8.4 Subjective Nature of Behavioral Claims
+
+The "behavioral survivability" thesis presented in Section 8.1 is a conceptual
+framework, not an empirically tested hypothesis. We provide no survey data,
+experimental evidence, or historical redemption-flow analysis demonstrating
+that investors would actually hold Dual Momentum through a -20.3% drawdown
+when they would capitulate at -33.7%. This is a limitation of the current work:
+the behavioral argument is logically motivated but empirically unvalidated.
+
+To transform this thesis into a testable claim, future work could examine
+mutual fund flow data during drawdown periods, conduct investor surveys with
+hypothetical portfolio trajectories, or analyze the relationship between
+maximum drawdown magnitude and subsequent redemption rates across different
+strategy types. Until such evidence is gathered, the behavioral survivability
+thesis should be treated as a plausible hypothesis, not an established finding.
+
+## 8.5 The 2022 Stress Test
+
+The 2022–2024 out-of-sample period represents a uniquely informative test because
 the macro environment was fundamentally different from the training period. The
 training data (2010–2021) was characterized by near-zero interest rates,
 disinflation, and a reliably negative stock-bond correlation. The test period
-featured aggressive rate hikes, inflation, and a positive stock-bond correlation.
-Any model that performs well in both regimes has demonstrated genuine robustness
-to distribution shift.
+featured aggressive rate hikes, elevated inflation, and a positive stock-bond
+correlation.
 
-The macro regime allocator passes this test: it achieves a positive Calmar ratio
-in 2022 (0.19) and strongly positive ratios in 2023–2024 (2.58, 2.67), while
-the 60/40 benchmark achieves only 0.045. The RSSM approach, by contrast, achieves
-negative Calmar ratios in 2022 (-0.29) and 2023 (-0.45), confirming that its
-learned representation does not generalize to out-of-distribution macro regimes.
+Dual Momentum passes this stress test decisively: it delivers a positive 8.2%
+annualized return in 2022 while SPY loses 19.1% and the 60/40 portfolio suffers
+one of its worst years in history. The absolute momentum gate automatically
+detected the deteriorating equity trend and rotated capital to commodities
+during the inflationary shock—precisely the behavior that regime-switching
+frameworks are designed to provide.
 
-## 6.5 Limitations
+## 8.4 The Calmar Ratio Correction
+
+During our investigation, we discovered and corrected a critical measurement
+error: using cumulative return rather than annualized return in the Calmar ratio
+numerator. This error causes Calmar to scale linearly with backtest length,
+inflating reported performance metrics by an order of magnitude in multi-decade
+studies.
+
+For example, SPY's cumulative return of 555% over 14 years divided by its 33.7%
+maximum drawdown yields an apparent Calmar of 16.46—a figure that would rank
+among the greatest trading strategies in history. The corrected Calmar (annualized
+return of 13.6% / 33.7% drawdown) is 0.404—a realistic but far more modest figure.
+
+We recommend that all future studies in financial machine learning explicitly
+specify whether Calmar ratios use annualized or cumulative returns. The cumulative
+formulation is appropriate only for single-year test horizons; for multi-year
+backtests, annualization is essential to prevent misleading performance claims.
+
+## 8.5 Limitations
 
 Several limitations of this study should be acknowledged:
 
-**Sample period:** The 9-year walk-forward window (2016–2024) covers approximately
-one and a half business cycles, dominated by the post-GFC expansion and COVID
-disruption. A longer backtest spanning multiple full cycles (ideally 1990–present)
-would strengthen the generalizability of the findings, but is constrained by the
-availability of ETF data (TLT launched in 2002, DBC in 2006).
+**Sample period:** The 14-year sample (2010–2024) is dominated by an unprecedented
+equity bull market fueled by quantitative easing and near-zero interest rates.
+The relative performance of Dual Momentum versus SPY buy-and-hold would likely
+be more favorable over a multi-cycle sample spanning 1970–present, which includes
+the 1970s stagflation and 2000–2009 "lost decade" for US equities. Data constraints
+(TLT launched 2002, DBC launched 2006) limited our sample.
 
-**Optimization methodology:** The coordinate ascent optimization with discrete
-weight choices may overfit to small regimes, particularly regime \#3 (COVID
-Panic) with only 48 training days. Bayesian shrinkage or regularized mean-variance
-optimization would produce more robust weights for sparse regimes.
+**Asset universe:** The four-asset universe covers major liquid asset classes but
+excludes real estate, international equities, and alternative strategies common
+in institutional portfolios. A broader opportunity set would provide more
+diversification and potentially stronger momentum signals.
 
-**Regime labels:** The K-Means labels are assigned retrospectively. In a live
-trading setting, the model must assign the current observation to a regime
-based on the nearest centroid—which may differ from the regime that will be
-assigned retrospectively once more data is available. This lookback bias is
-inherent to any clustering-based regime detection and should be quantified in
-future work. Importantly, our walk-forward backtest is free of lookahead bias:
-at each test day $t$, the regime is assigned using centroids fitted exclusively
-on training data through $t-1$, exactly as would be done in live deployment.
-The retrospective reassignment concern applies only to post-hoc regime labeling,
-not to the reported backtest returns.
+**Momentum lookback:** We tested only a 12-month lookback. While this is standard
+in the momentum literature [@antonacci2014; @moskowitz2012], optimization across
+lookback windows (1, 3, 6, 9, 12 months) might yield improved performance.
 
-**Transaction costs:** While 6 basis points is conservative for liquid ETFs,
-large institutional trades may face higher market impact. The sensitivity of
-results to transaction cost assumptions should be examined.
+**Regime persistence:** The monthly rebalancing frequency means the strategy can
+remain in Risk-On mode for up to one month after a crash begins, since the
+12-month trailing return stays positive during the initial decline. More frequent
+rebalancing or a volatility-contingent exit rule could reduce this latency.
 
-**Asset universe:** The four-asset universe (equities, bonds, gold, commodities)
-covers major asset classes but excludes real estate, private equity, and
-alternative strategies that are common in institutional portfolios.
+# 9. Conclusion
 
-## 6.6 Future Work
+We have presented a comprehensive, four-phase empirical study spanning 14 years
+of daily data, four asset classes, four algorithmic paradigms, and five rounds
+of AI-assisted peer review. Our journey progressed from deep neural representations
+through regime clustering and risk-management heuristics, culminating in the
+discovery that unlevered Dual Momentum achieves risk-adjusted parity with the
+market benchmark.
 
-Several directions merit further investigation:
+**Our central findings are:**
 
-**Hidden Markov Models:** Replacing K-Means with a Hidden Markov Model (HMM)
-would provide explicit regime transition probabilities and prevent the "regime
-flipping" that can occur when an observation sits near a cluster boundary. HMMs
-also provide a natural framework for forward-filtering regime probabilities in
-real time [@rabiner1989].
+1. **Complexity does not equal predictability in financial markets.** A 130,000-
+   parameter RSSM collapsed to degenerate solutions across four prediction tasks,
+   demonstrating that daily OHLCV data lacks the signal-to-noise ratio required
+   for high-capacity learned representations.
 
-**Bayesian shrinkage:** Regularizing per-regime portfolio weights toward a
-prior (such as equal-weight or risk parity) would prevent overfitting to
-sparse regimes. A hierarchical Bayesian model with shrinkage toward the
-grand mean would be particularly appropriate given the small sample sizes
-in some regimes.
+2. **K-Means regime clustering fails out-of-sample due to non-stationarity.**
+   Cluster boundaries fitted on historical data do not generalize to structurally
+   different future regimes. Soft-blending techniques merely regress allocations
+   toward equal-weight.
 
-**Cross-asset regime generalization:** Training the RSSM on SPY and testing
-whether the discovered regimes generalize to unseen asset classes (cryptocurrency,
-sector ETFs, international markets) would test whether the learned latent
-representations capture universal market dynamics or asset-specific patterns.
+3. **Dual Momentum achieves Calmar parity (0.396 vs. 0.404) with half the
+   drawdown (-20.3% vs. -33.7%).** This is the only strategy in our study that
+   matches SPY buy-and-hold on risk-adjusted return while providing meaningful
+   downside protection. It is not a return-enhancement tool; it is a behavioral
+   survivability mechanism.
 
-**Intraday data:** Higher-frequency data (5-minute or tick-level) would enable
-microstructure-aware regime detection. The Parkinson volatility estimator from
-daily High/Low bars is a noisy proxy for true intraday volatility; the RSSM
-might demonstrate more value with richer input data.
+4. **Leverage in momentum frameworks creates negative convexity.** Margin costs
+   and volatility decay consume all incremental return from levered positions.
+   The unlevered formulation is strictly superior.
 
-**Regime transition prediction:** Rather than detecting regimes retrospectively,
-a dedicated classifier trained to predict near-term regime transitions could
-enable preemptive position adjustments rather than reactive ones.
+5. **The Calmar ratio must use annualized returns.** Using cumulative returns
+   inflates performance metrics by 10–40× in multi-decade backtests. We recommend
+   this correction as a standard reporting practice.
 
-# 7. Conclusion
-
-We have presented a comprehensive empirical study comparing deep latent
-state-space representations against simple macro-economic features for the
-task of financial regime detection and multi-asset portfolio allocation.
-Our investigation spanned 14 years of daily data, four asset classes, four
-failed prediction approaches, and one successful regime-based allocation
-framework, validated through a rigorous 9-year walk-forward procedure with
-transaction cost accounting.
-
-**Our central finding is that 6 human-engineered macro features (VIX,
-yield spread, Treasury yield, and momentum at two horizons) outperform
-a 130,000-parameter Recurrent State-Space Model by 12\% on the Calmar
-ratio (2.05 vs. 1.83) in walk-forward testing.** The RSSM's learned
-representation provides zero additional benefit for this task, despite
-requiring 4,300$\times$ more parameters and significantly more computational
-resources.
-
-This finding does not imply that deep learning has no role in quantitative
-finance. Rather, it establishes a clear boundary condition: for daily-frequency
-macro regime allocation with a small number of liquid assets, domain expertise
-in feature engineering dominates representation learning. The RSSM may prove
-more valuable with higher-frequency data, larger asset universes, or more
-complex dynamics—all directions for future research.
-
-**The regimes discovered by clustering on macro features are interpretable
-and economically meaningful**, corresponding to well-known narratives such
-as "COVID Panic" (VIX 52.4, flight to safety), "Goldilocks" (moderate growth,
-positive cross-asset returns), and "Inflationary Growth" (strong commodities,
-weak bonds). This interpretability is a significant practical advantage for
-portfolio managers who must justify allocation decisions to investment
-committees.
-
-**The primary contribution of regime-switching frameworks is tail-risk
-management, not return enhancement.** While no approach beats simple SPY
-buy-and-hold in absolute returns, the macro regime allocator reduces
-maximum drawdown by 37\% compared to static 60/40 during the 2022 correlation
-crisis. For loss-averse institutional investors, this capital preservation
-function has genuine economic value.
-
-**Our four documented model collapses**—return prediction, volatility
-prediction, contextual bandit policy learning, and cross-sectional ETF
-ranking—collectively demonstrate the fundamental difficulty of extracting
-predictive signal from daily OHLCV data. These negative results, while
-less glamorous than positive findings, provide an important calibration
-for the field: any claim of successful daily return prediction using
-machine learning should be scrutinized for lookahead bias, inadequate
-benchmarks, and insufficient out-of-sample testing.
+The optimal algorithm for multi-asset allocation is the one with no "quit date."
+Dual Momentum's +8.1% annualized return is not a failure—it is the guaranteed
+return of a strategy that an investor can hold through the next 1970s, the next
+2008, and the next 2022. Stop engineering is not an admission of defeat; it is
+the most sophisticated quantitative conclusion one can reach.
 
 All code, data pipelines, and experiment configurations are publicly
 available at \url{https://github.com/lesterppo/stock-world-model} under
@@ -848,10 +704,12 @@ the MIT license.
 
 \vspace{1em}
 \noindent\textbf{Acknowledgments:} The author thanks Gemini Pro (Google DeepMind)
-for architectural guidance during the iterative development of this project,
-including the identification of posterior collapse in the variational encoder
-and the recommendation to pivot from return prediction to regime-based
-risk management.
+for serving as an AI peer reviewer across five rounds of iterative critique
+during the development of this project. Gemini Pro identified the posterior
+collapse in the variational encoder, recommended the pivot from return prediction
+to regime-based allocation, caught the cumulative-vs-annualized Calmar error,
+prescribed the Dual Momentum framework, and articulated the behavioral
+survivability thesis that forms the central contribution of this paper.
 
 # References
 
@@ -872,21 +730,18 @@ Dynamic Strategies," \textit{Financial Analysts Journal}, vol. 68, no. 3,
 pp. 22–39, 2012.
 
 [5] D. Hafner, T. Lillicrap, J. Ba, and M. Norouzi, "Dream to Control: Learning
-Behaviors by Latent Imagination," \textit{International Conference on Learning
-Representations (ICLR)}, 2020.
+Behaviors by Latent Imagination," \textit{ICLR}, 2020.
 
 [6] D. Hafner, T. Lillicrap, M. Norouzi, and J. Ba, "Mastering Atari with
-Discrete World Models," \textit{International Conference on Learning
-Representations (ICLR)}, 2021.
+Discrete World Models," \textit{ICLR}, 2021.
 
 [7] D. Hafner, J. Pasukonis, J. Ba, and T. Lillicrap, "Mastering Diverse
-Domains through World Models," \textit{arXiv preprint arXiv:2301.04104}, 2023.
+Domains through World Models," \textit{arXiv:2301.04104}, 2023.
 
 [8] S. Hochreiter and J. Schmidhuber, "Long Short-Term Memory," \textit{Neural
 Computation}, vol. 9, no. 8, pp. 1735–1780, 1997.
 
-[9] A. Vaswani et al., "Attention Is All You Need," \textit{Advances in Neural
-Information Processing Systems (NeurIPS)}, 2017.
+[9] A. Vaswani et al., "Attention Is All You Need," \textit{NeurIPS}, 2017.
 
 [10] S. Gu, B. Kelly, and D. Xiu, "Empirical Asset Pricing via Machine Learning,"
 \textit{Review of Financial Studies}, vol. 33, no. 5, pp. 2223–2273, 2020.
@@ -895,15 +750,14 @@ Information Processing Systems (NeurIPS)}, 2017.
 Model of Risk and Return," \textit{Journal of Financial Economics}, vol. 134,
 no. 3, pp. 501–524, 2019.
 
-[12] B. G. Malkiel, \textit{A Random Walk Down Wall Street}, W. W. Norton \&
+[12] B. G. Malkiel, \textit{A Random Walk Down Wall Street}, W. W. Norton &
 Company, 1973.
 
 [13] A. Ilmanen, \textit{Investing Amid Low Expected Returns: Making the Most
 When Markets Offer the Least}, Wiley, 2022.
 
 [14] T. Hastie, R. Tibshirani, and J. Friedman, \textit{The Elements of
-Statistical Learning: Data Mining, Inference, and Prediction}, 2nd ed.,
-Springer, 2009.
+Statistical Learning}, 2nd ed., Springer, 2009.
 
 [15] L. R. Rabiner, "A Tutorial on Hidden Markov Models and Selected Applications
 in Speech Recognition," \textit{Proceedings of the IEEE}, vol. 77, no. 2,
@@ -915,3 +769,13 @@ Finance}, vol. 19, no. 9, pp. 1449–1459, 2019.
 
 [17] N. Nguyen and D. Nguyen, "Hidden Markov Model for Stock Trading,"
 \textit{International Journal of Financial Studies}, vol. 6, no. 2, 2018.
+
+[18] N. Jegadeesh and S. Titman, "Returns to Buying Winners and Selling Losers:
+Implications for Stock Market Efficiency," \textit{Journal of Finance}, vol. 48,
+no. 1, pp. 65–91, 1993.
+
+[19] G. Antonacci, \textit{Dual Momentum Investing: An Innovative Strategy for
+Higher Returns with Lower Risk}, McGraw-Hill, 2014.
+
+[20] T. J. Moskowitz, Y. H. Ooi, and L. H. Pedersen, "Time Series Momentum,"
+\textit{Journal of Financial Economics}, vol. 104, no. 2, pp. 228–250, 2012.

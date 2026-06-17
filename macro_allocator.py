@@ -53,6 +53,8 @@ class MacroRegimeAllocator:
         tc_bps: float = 5.0,
         slippage_bps: float = 1.0,
         n_ensemble: int = 5,
+        soft_assign: bool = True,
+        soft_temperature: float = 1.0,
     ):
         self.n_regimes = n_regimes
         self.max_position = max_position
@@ -61,6 +63,8 @@ class MacroRegimeAllocator:
         self.tc_bps = tc_bps
         self.slippage_bps = slippage_bps
         self.n_ensemble = n_ensemble
+        self.soft_assign = soft_assign
+        self.soft_temperature = soft_temperature
 
         self.scaler = StandardScaler()
         self.kmeans_models = []     # ensemble of K-Means
@@ -132,7 +136,11 @@ class MacroRegimeAllocator:
         """
         Walk-forward ensemble prediction with transaction costs.
 
-        Returns: positions [N, A], net_rets [N], diagnostics dict
+        When soft_assign=True (default): blends regime weights by inverse
+        distance to ALL centroids, not just the nearest. This prevents
+        K-Means cluster collapse on non-stationary test data.
+
+        Returns: positions [N, A], net_rets [N]
         """
         F_scaled = self.scaler.transform(features_test)
         n_assets = returns_test.shape[1]
@@ -143,7 +151,6 @@ class MacroRegimeAllocator:
         prev_pos = np.ones(n_assets) / n_assets  # start equal-weight
 
         for t in range(N):
-            # Ensemble: average weights across K-Means models
             target_w = np.zeros(n_assets)
             n_active = 0
 
@@ -152,17 +159,40 @@ class MacroRegimeAllocator:
                 centroids = self.centroids_list[m_idx]
                 ood_thresh = self.ood_thresholds[m_idx]
 
-                label = int(km.predict(F_scaled[t:t+1])[0])
+                if self.soft_assign:
+                    # ── Soft distance-weighted blend across ALL regimes ──
+                    dists = np.array([
+                        np.sqrt(np.sum((F_scaled[t] - centroids[c]) ** 2))
+                        for c in range(self.n_regimes)
+                    ])
+                    # Temperature-scaled softmax over NEGATIVE distances
+                    # Closer centroid → higher weight
+                    # Low temperature → harder assignment; high → more uniform
+                    logits = -dists / (self.soft_temperature * np.std(dists) + 1e-8)
+                    logits -= logits.max()  # numerical stability
+                    blend_w = np.exp(logits)
+                    blend_w /= blend_w.sum()
 
-                # OOD guard
-                min_dist = np.inf
-                for c in range(self.n_regimes):
-                    d = np.sqrt(np.sum((F_scaled[t] - centroids[c]) ** 2))
-                    min_dist = min(min_dist, d)
+                    # OOD guard: if min distance > threshold, pull toward equal-weight
+                    min_dist = dists.min()
+                    if min_dist > ood_thresh:
+                        ood_frac = min(1.0, (min_dist - ood_thresh) / (ood_thresh + 1e-8))
+                        blend_w = blend_w * (1 - ood_frac * 0.7) + ood_frac * 0.7 * (1.0 / self.n_regimes)
 
-                w = self.regime_weights[m_idx][label].copy()
-                if min_dist > ood_thresh:
-                    w *= 0.3  # reduce to 30% in OOD territory
+                    # Blend regime weights
+                    w = np.zeros(n_assets)
+                    for c in range(self.n_regimes):
+                        w += blend_w[c] * self.regime_weights[m_idx][c]
+                else:
+                    # ── Hard assignment (original behavior) ──
+                    label = int(km.predict(F_scaled[t:t+1])[0])
+                    min_dist = np.inf
+                    for c in range(self.n_regimes):
+                        d = np.sqrt(np.sum((F_scaled[t] - centroids[c]) ** 2))
+                        min_dist = min(min_dist, d)
+                    w = self.regime_weights[m_idx][label].copy()
+                    if min_dist > ood_thresh:
+                        w *= 0.3
 
                 target_w += w
                 n_active += 1
